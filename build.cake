@@ -1,5 +1,5 @@
-#tool nuget:?package=NuGet.CommandLine&version=5.11.0
-#tool nuget:?package=NUnit.ConsoleRunner&version=3.12.0
+#tool nuget:?package=NuGet.CommandLine&version=6.3.0
+#tool nuget:?package=NUnit.ConsoleRunner&version=3.15.2
 
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
@@ -39,7 +39,7 @@ Task("Build")
     var buildLogFile = artifactDir.CombineWithFilePath("BuildLog.txt");
     var buildSettings = new MSBuildSettings {
         Verbosity = Verbosity.Minimal,
-        ToolVersion = MSBuildToolVersion.VS2019,
+        ToolVersion = MSBuildToolVersion.VS2022,
         Configuration = configuration,
         PlatformTarget = PlatformTarget.MSIL,
     }.AddFileLogger(new MSBuildFileLogger {
@@ -100,6 +100,7 @@ Task("Run-UI-Tests")
         },
         ArgumentCustomization = args => args.Append("--testparam:uia=2")
     });
+    Information("Finished UIA2 Tests");
     if (AppVeyor.IsRunningOnAppVeyor) {
         AppVeyor.UploadTestResults(resultFile, AppVeyorTestResultsType.NUnit3);
     }
@@ -111,6 +112,7 @@ Task("Run-UI-Tests")
         },
         ArgumentCustomization = args => args.Append("--testparam:uia=3")
     });
+    Information("Finished UIA3 Tests");
     if (AppVeyor.IsRunningOnAppVeyor) {
         AppVeyor.UploadTestResults(resultFile, AppVeyorTestResultsType.NUnit3);
     }

@@ -1,4 +1,5 @@
-﻿#if !NET35 && !NET40
+﻿using FlaUI.Core.Logging;
+using FlaUI.Core.Tools;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -8,10 +9,8 @@ using System.IO;
 using System.IO.Compression;
 using System.IO.Pipes;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
-using FlaUI.Core.Logging;
-using FlaUI.Core.Tools;
 
 namespace FlaUI.Core.Capturing
 {
@@ -27,6 +26,7 @@ namespace FlaUI.Core.Capturing
         private bool _shouldRecord;
         private Task _writeTask;
         private DateTime _recordStartTime;
+        private static readonly HttpClient _httpClient = new HttpClient();
 
         /// <summary>
         /// Creates the video recorder and starts recording.
@@ -65,10 +65,11 @@ namespace FlaUI.Core.Capturing
                 {
                     var requiredFrames = (int)Math.Floor(sw.Elapsed.TotalSeconds * _settings.FrameRate);
                     var diff = requiredFrames - frameCount;
-                    if (diff >= 5)
+                    if (diff >= 5 && _settings.LogMissingFrames)
                     {
                         Logger.Default.Warn($"Adding many ({diff}) missing frame(s) to \"{Path.GetFileName(TargetVideoPath)}\".");
                     }
+
                     for (var i = 0; i < diff; ++i)
                     {
                         _frames.Add(ImageData.RepeatImage);
@@ -95,7 +96,7 @@ namespace FlaUI.Core.Capturing
                     await Task.Delay(timeTillNextFrame);
                 }
             }
-            if (totalMissedFrames > 0)
+            if (totalMissedFrames > 0 && _settings.LogMissingFrames)
             {
                 Logger.Default.Warn($"Totally added {totalMissedFrames} missing frame(s) to \"{Path.GetFileName(TargetVideoPath)}\".");
             }
@@ -257,10 +258,8 @@ namespace FlaUI.Core.Capturing
             if (!File.Exists(destPath))
             {
                 // Download
-                using (var webClient = new WebClient())
-                {
-                    await webClient.DownloadFileTaskAsync(uri, archivePath);
-                }
+                byte[] fileBytes = await _httpClient.GetByteArrayAsync(uri);
+                File.WriteAllBytes(archivePath, fileBytes);
                 // Extract
                 Directory.CreateDirectory(targetFolder);
                 await Task.Run(() =>
@@ -292,4 +291,3 @@ namespace FlaUI.Core.Capturing
         }
     }
 }
-#endif

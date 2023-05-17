@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using FlaUI.Core.Conditions;
 using FlaUI.Core.Definitions;
 using FlaUI.Core.Exceptions;
+using FlaUI.Core.Tools;
 using FlaUI.Core.WindowsAPI;
 
 namespace FlaUI.Core.AutomationElements
@@ -49,7 +50,7 @@ namespace FlaUI.Core.AutomationElements
         {
             get
             {
-                return FindAllChildren(cf =>
+                return FindAllDescendants(cf =>
                     cf.ByControlType(ControlType.Window).
                     And(new PropertyCondition(Automation.PropertyLibrary.Window.IsModal, true))
                 ).Select(e => e.AsWindow()).ToArray();
@@ -95,7 +96,10 @@ namespace FlaUI.Core.AutomationElements
             var mainWindow = GetMainWindow();
             if (frameworkType == FrameworkType.WinForms)
             {
-                var ctxMenu = mainWindow.FindFirstChild(cf => cf.ByControlType(ControlType.Menu).And(cf.ByName("DropDown")));
+                var ctxMenu = Retry.WhileNull(() => mainWindow.FindFirstChild(cf =>
+                    new AndCondition(
+                        new OrCondition(cf.ByControlType(ControlType.Menu), cf.ByControlType(ControlType.ToolBar))
+                        , cf.ByName("DropDown"))), TimeSpan.FromSeconds(1)).Result;
                 return ctxMenu.AsMenu();
             }
             if (frameworkType == FrameworkType.Wpf)

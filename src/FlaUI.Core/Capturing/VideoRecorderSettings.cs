@@ -1,5 +1,4 @@
-﻿#if (!NET35 && !NET40)
-namespace FlaUI.Core.Capturing
+﻿namespace FlaUI.Core.Capturing
 {
     /// <summary>
     /// Settings class for the <see cref="VideoRecorder"/>.
@@ -47,6 +46,10 @@ namespace FlaUI.Core.Capturing
         /// Run the encoding with low processor priority.
         /// </summary>
         public bool EncodeWithLowPriority { get; set; }
+
+        /// <summary>
+        /// If to log warning when recorder detects that there were missing frames. Default is <c>true</c>
+        /// </summary>
+        public bool LogMissingFrames { get; set; } = true;
     }
 }
-#endif
